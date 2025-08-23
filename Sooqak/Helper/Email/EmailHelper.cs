@@ -8,7 +8,7 @@ namespace Sooqak.Helper.Email
     {
         public static async Task SendEmail(string email, string code, string title, string message)
         {
-            var apiKey = "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";
+            var apiKey = "";
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("suhaibamjad73@gmail.com", "Sooqak Admin");
             var subject = title;
