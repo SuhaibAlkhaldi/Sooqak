@@ -4,7 +4,7 @@ using System.Net.Mail;
 
 namespace Sooqak.Helper.Email
 {
-    public static class EmailHelper
+    public static class EmailHelper 
     {
         public static async Task SendEmail(string email, string code, string title, string message)
         {
