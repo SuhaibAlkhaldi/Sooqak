@@ -20,6 +20,7 @@ builder.Services.AddScoped<ICar, CarsService>();
 builder.Services.AddScoped<IApartment, ApartmentService>();
 builder.Services.AddScoped<IElectricalAppliance, ElectricalApplianceService>();
 builder.Services.AddScoped<IWork, WorkService>();
+builder.Services.AddScoped<IUserFavorite, UserFavoriteService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

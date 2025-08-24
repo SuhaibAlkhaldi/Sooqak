@@ -19,5 +19,6 @@ namespace Sooqak.Entities
         public DateTime? OTPExpiry { get; set; }
 
         public ICollection<Advertisement> Advertisements { get; set; }
+        public ICollection<UserFavorite> UserFavorites { get; set; }
     }
 }

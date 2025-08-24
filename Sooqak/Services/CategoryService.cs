@@ -4,6 +4,7 @@ using Sooqak.Context;
 using Sooqak.DTO.CategoryDTO.Input;
 using Sooqak.DTO.CategoryDTO.Output;
 using Sooqak.Entities;
+using Sooqak.Helper.Image;
 using Sooqak.Interface;
 
 
@@ -30,7 +31,7 @@ namespace Sooqak.Services
                 {
                     CategoryType = input.CategoryType,
                     Description = input.Description,
-                    Icon = input.Icon,
+                    Icon = await ImageHelper.SaveImageAsync(input.Icon),
                     CreationDate = DateTime.Now,
                     CreatedBy = "Admin"
                 };
@@ -66,8 +67,8 @@ namespace Sooqak.Services
                 if (!string.IsNullOrEmpty(input.Description))
                     category.Description = input.Description;
 
-                if (!string.IsNullOrEmpty(input.Icon))
-                    category.Icon = input.Icon;
+                if (!string.IsNullOrEmpty(await ImageHelper.SaveImageAsync(input.Icon)))
+                    category.Icon = await ImageHelper.SaveImageAsync(input.Icon);
 
                 _context.Update(category);
                 await _context.SaveChangesAsync();

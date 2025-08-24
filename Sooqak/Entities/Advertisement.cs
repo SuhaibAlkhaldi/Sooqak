@@ -11,6 +11,7 @@ namespace Sooqak.Entities
         public EAdvertisementType AdvertisementType { get; set; }
         public string Location { get; set; }
         public EAdvertisementStatus Status { get; set; }
+        public string Image { get; set; }
         [ForeignKey("UserId")]
         public int UserId { get; set; }
         public User User { get; set; }
@@ -21,5 +22,6 @@ namespace Sooqak.Entities
         public ApartmentDetail ApartmentDetails { get; set; }
         public ElectricalAppliance ElectricalAppliance { get; set; }
         public Work Work { get; set; }
+        public ICollection<UserFavorite> UserFavorites { get; set; }
     }
 }

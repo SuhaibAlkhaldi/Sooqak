@@ -12,6 +12,7 @@ namespace Sooqak.Context
         public DbSet<ElectricalAppliance> electricalAppliances { get; set; }
         public DbSet<Work> works { get; set; }
         public DbSet<Category> categories { get; set; }
+        public DbSet<UserFavorite> userFavorite { get; set; }
         
 
 

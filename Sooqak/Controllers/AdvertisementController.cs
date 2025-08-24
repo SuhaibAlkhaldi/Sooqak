@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sooqak.DTO.AdvertisementDTO.Input;
+using Sooqak.Helper.Enums.AdvertisementEnum;
 using Sooqak.Interface;
 
 namespace Sooqak.Controllers
@@ -48,6 +49,36 @@ namespace Sooqak.Controllers
         }
 
 
+        [HttpGet("[action]")]
+        public async Task<IActionResult> FilterAdvertisements(int? categoryId = null,
+            EAdvertisementType? advertisementType = null)
+        {
+            try
+            {
+                var result = await _advertisement.FilterAdvertisements(categoryId, advertisementType);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetAdvertisementByCategory(int categoryId)
+        {
+            try
+            {
+                var result = await _advertisement.GetAdvertisementsByCategory(categoryId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+
+        }
         [HttpPost("[action]")]
         public async Task<IActionResult> AddAdvertisement(AddAdvertisementInputDTO input)
         {
@@ -78,7 +109,7 @@ namespace Sooqak.Controllers
         }
 
 
-        [HttpDelete("[action]")]
+        [HttpDelete("[action]/{categoryId}")]
         public async Task<IActionResult> DeleteAdvertisement(int advertisementId)
         {
             try

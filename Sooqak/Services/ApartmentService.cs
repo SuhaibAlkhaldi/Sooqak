@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Sooqak.Context;
+using Sooqak.DTO.ApartmentDetailsDTO.Input;
 using Sooqak.DTO.ApartmentDetailsDTO.Output;
 using Sooqak.Interface;
 
@@ -13,164 +15,53 @@ namespace Sooqak.Services
             _context = context;
         }
 
-        public async Task<List<GetApartmentOutputDTO>> GetApartmentByArea(double area)
+        public async Task<List<GetApartmentOutputDTO>> GetApartmentsByFilter(ApartmentFilterDTO filter)
         {
-            try
-            {
-                var apartment = await _context.apartmentDetails.Where(x => x.Area == area)
-                    .Select(c => new GetApartmentOutputDTO
-                    {
-                        ApartmentId = c.Id,
-                        Area = c.Area,
-                        BathroomsCount = c.BathroomsCount,
-                        Description = c.Description,
-                        FloorNumber = c.FloorNumber,
-                        Image = c.Image,
-                        IsFurnished = c.IsFurnished,
-                        IsHaveBalcony = c.IsHaveBalcony,
-                        IsHaveElevator = c.IsHaveElevator,
-                        IsHaveParking = c.IsHaveParking,
-                        RoomsCount = c.RoomsCount,
-                        TotalFloor = c.TotalFloor,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return apartment;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
+            var query = _context.apartmentDetails.Include(a => a.Advertisement).AsQueryable();
 
-        public async Task<List<GetApartmentOutputDTO>> GetApartmentByFloorNumber(int floorNumber)
-        {
-            try
-            {
-                var apartment = await _context.apartmentDetails.Where(x => x.FloorNumber == floorNumber)
-                    .Select(c => new GetApartmentOutputDTO
-                    {
-                        ApartmentId = c.Id,
-                        Area = c.Area,
-                        BathroomsCount = c.BathroomsCount,
-                        Description = c.Description,
-                        FloorNumber = c.FloorNumber,
-                        Image = c.Image,
-                        IsFurnished = c.IsFurnished,
-                        IsHaveBalcony = c.IsHaveBalcony,
-                        IsHaveElevator = c.IsHaveElevator,
-                        IsHaveParking = c.IsHaveParking,
-                        RoomsCount = c.RoomsCount,
-                        TotalFloor = c.TotalFloor,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return apartment;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
+            if (filter.RoomsCount.HasValue)
+                query = query.Where(a => a.RoomsCount == filter.RoomsCount.Value).OrderBy(r => r.RoomsCount);
 
-        public async Task<List<GetApartmentByLocationDTO>> GetApartmentByLocation(string location)
-        {
-            try
-            {
-                var getLocation = await _context.advertisements.Where(x => x.Location == location).SingleOrDefaultAsync();
-                if (getLocation == null)
-                {
-                    throw new Exception($"Could not find location {location}");
-                }
-                var apartment = await( from apart in _context.apartmentDetails
-                                join adv in _context.advertisements on apart.AdvertisementId equals adv.Id
-                                where adv.Location == location
-                                select new GetApartmentByLocationDTO
-                                {
-                                    ApartmentId = apart.Id,
-                                    Area = apart.Area,
-                                    BathroomsCount = apart.BathroomsCount,
-                                    Description = apart.Description,
-                                    FloorNumber = apart.FloorNumber,
-                                    Image = apart.Image,
-                                    IsFurnished = apart.IsFurnished,
-                                    IsHaveBalcony = apart.IsHaveBalcony,
-                                    IsHaveElevator = apart.IsHaveElevator,
-                                    IsHaveParking = apart.IsHaveParking,
-                                    RoomsCount = apart.RoomsCount,
-                                    TotalFloor = apart.TotalFloor,
-                                    AdvertisementId = apart.AdvertisementId,
-                                    Location = adv.Location,
-                                }).ToListAsync();
-                return apartment;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
+            if (filter.FloorNumber.HasValue)
+                query = query.Where(a => a.FloorNumber == filter.FloorNumber.Value);
 
-        
+            if (filter.MinArea.HasValue)
+                query = query.Where(a => a.Area >= filter.MinArea.Value).OrderBy(a => a.Area);
 
-        public async Task<List<GetApartmentOutputDTO>> GetApartmentByRoomsCount(int roomsCount)
-        {
-            try
-            {
-                var apartment = await _context.apartmentDetails.Where(x => x.RoomsCount == roomsCount)
-                    .Select(c => new GetApartmentOutputDTO
-                    {
-                        ApartmentId = c.Id,
-                        Area = c.Area,
-                        BathroomsCount = c.BathroomsCount,
-                        Description = c.Description,
-                        FloorNumber = c.FloorNumber,
-                        Image = c.Image,
-                        IsFurnished = c.IsFurnished,
-                        IsHaveBalcony = c.IsHaveBalcony,
-                        IsHaveElevator = c.IsHaveElevator,
-                        IsHaveParking = c.IsHaveParking,
-                        RoomsCount = c.RoomsCount,
-                        TotalFloor = c.TotalFloor,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return apartment;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
+            if (filter.MaxArea.HasValue)
+                query = query.Where(a => a.Area <= filter.MaxArea.Value).OrderBy(a => a.Area);
+
+            if (filter.MinPrice.HasValue)
+                query = query.Where(a => a.Advertisement.Price >= filter.MinPrice.Value).OrderBy(p => p.Advertisement.Price);
+
+            if (filter.MaxPrice.HasValue)
+                query = query.Where(a => a.Advertisement.Price <= filter.MaxPrice.Value).OrderBy(p => p.Advertisement.Price);
+
+            if (!string.IsNullOrEmpty(filter.Location))
+                query = query.Where(a => a.Advertisement.Location.Contains(filter.Location));
 
 
+            query = query
+                        .Skip((filter.PageNumber - 1) * filter.PageSize)
+                        .Take(filter.PageSize);
 
-        public async Task<List<GetApartmentByPriceDTO>> GetApartmentByPrice(decimal price)
-        {
-            try
+            return await query.Select(a => new GetApartmentOutputDTO
             {
-                var apartment = await (from apart in _context.apartmentDetails
-                                       join adv in _context.advertisements on apart.AdvertisementId equals adv.Id
-                                       where adv.Price == price
-                                       select new GetApartmentByPriceDTO
-                                       {
-                                           ApartmentId = apart.Id,
-                                           Area = apart.Area,
-                                           BathroomsCount = apart.BathroomsCount,
-                                           Description = apart.Description,
-                                           FloorNumber = apart.FloorNumber,
-                                           Image = apart.Image,
-                                           IsFurnished = apart.IsFurnished,
-                                           IsHaveBalcony = apart.IsHaveBalcony,
-                                           IsHaveElevator = apart.IsHaveElevator,
-                                           IsHaveParking = apart.IsHaveParking,
-                                           RoomsCount = apart.RoomsCount,
-                                           TotalFloor = apart.TotalFloor,
-                                           AdvertisementId = apart.AdvertisementId,
-                                           Price = adv.Price
-                                       }).ToListAsync();
-                return apartment;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+                ApartmentId = a.Id,
+                RoomsCount = a.RoomsCount,
+                BathroomsCount = a.BathroomsCount,
+                FloorNumber = a.FloorNumber,
+                TotalFloor = a.TotalFloor,
+                Area = a.Area,
+                IsFurnished = a.IsFurnished,
+                IsHaveBalcony = a.IsHaveBalcony,
+                IsHaveElevator = a.IsHaveElevator,
+                IsHaveParking = a.IsHaveParking,
+                Image = a.Advertisement.Image,
+                Description = a.Description,
+                Price = a.Advertisement.Price,
+                Location = a.Advertisement.Location,
+            }).ToListAsync();
         }
     }
 }

@@ -11,8 +11,10 @@ namespace Sooqak.DTO.CarDetailsDTO.Output
         public int SeatsCount { get; set; }
         public EFuelType FuelType { get; set; }
         public string Color { get; set; }
-        public string Image { get; set; }
         public string Mileage { get; set; }
+        public string Location { get; set; }
+        public decimal Price { get; set; }
+        public string Image { get; set; }
         public ETransmission Transmission { get; set; }
         public int AdvertisementId { get; set; }
     }

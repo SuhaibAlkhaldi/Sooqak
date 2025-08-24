@@ -11,7 +11,9 @@ namespace Sooqak.DTO.WorksDTO.Output
         public decimal BasePrice { get; set; }
         public string Experience { get; set; }
         public bool Availability { get; set; }
-
+        public string Location { get; set; }
+        public decimal Price { get; set; }
+        public string Image { get; set; }
         public int AdvertisementId { get; set; }
     }
 }

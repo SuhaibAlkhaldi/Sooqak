@@ -2,6 +2,7 @@
 using Microsoft.VisualBasic.FileIO;
 using Sooqak.Context;
 using Sooqak.DTO.ApartmentDetailsDTO.Output;
+using Sooqak.DTO.CarDetailsDTO.Input;
 using Sooqak.DTO.CarDetailsDTO.Output;
 using Sooqak.Helper.Enums.CarDetailsEnum;
 using Sooqak.Interface;
@@ -16,211 +17,58 @@ namespace Sooqak.Services
             _context = context;
         }
 
+        public async Task<List<GetCarDetailsOutputDTO>> GetCarsByFilter(CarFilterDTO filter)
+        {
+            var query = _context.carDetails
+        .Include(c => c.Advertisement)
+        .AsQueryable();
+
+            if (!string.IsNullOrEmpty(filter.Model))
+                query = query.Where(c => c.Model.Contains(filter.Model)).OrderBy(m => m.Model);
+
+            if (filter.Year.HasValue)
+                query = query.Where(c => c.Year == filter.Year.Value).OrderBy(y => y.Year);
+
+            if (filter.SeatsCount.HasValue)
+                query = query.Where(c => c.SeatsCount == filter.SeatsCount.Value);
+
+            if (filter.FuelType.HasValue)
+                query = query.Where(c => c.FuelType == filter.FuelType.Value);
+
+            if (filter.Transmission.HasValue)
+                query = query.Where(c => c.Transmission == filter.Transmission.Value);
+
+            if (filter.MinPrice.HasValue)
+                query = query.Where(c => c.Advertisement.Price >= filter.MinPrice.Value).OrderBy(p => p.Advertisement.Price);
+
+            if (filter.MaxPrice.HasValue)
+                query = query.Where(c => c.Advertisement.Price <= filter.MaxPrice.Value).OrderBy(p => p.Advertisement.Price);
+
+            if (!string.IsNullOrEmpty(filter.Location))
+                query = query.Where(c => c.Advertisement.Location.Contains(filter.Location));
+
+            query = query
+                    .Skip((filter.PageNumber - 1) * filter.PageSize)
+                    .Take(filter.PageSize);
+
+            var result = await query.Select(c => new GetCarDetailsOutputDTO
+            {
+                CarDetailsId = c.Id,
+                Model = c.Model,
+                Year = c.Year,
+                SeatsCount = c.SeatsCount,
+                FuelType = c.FuelType,
+                Transmission = c.Transmission,
+                Price = c.Advertisement.Price,
+                Location = c.Advertisement.Location,
+                Image = c.Advertisement.Image
+            }).ToListAsync();
+
+            return result;
+        }
+
+
+
         
-
-        public async Task<List<GetCarDetailsOutputDTO>> GetCarsByModel(string model)
-        {
-            try
-            {
-                var car = await _context.carDetails.Where(x => x.Model == model)
-                    .Select(c => new GetCarDetailsOutputDTO
-                    {
-                        CarDetailsId = c.Id,
-                        Model = c.Model,
-                        Color = c.Color,
-                        FuelType = c.FuelType,
-                        Image = c.Image,
-                        Mileage = c.Mileage,
-                        SeatsCount = c.SeatsCount,
-                        Transmission = c.Transmission,
-                        Year = c.Year,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return car;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        
-
-        public async Task<List<GetCarDetailsOutputDTO>> GetCarsByYears(int year)
-        {
-            try
-            {
-                var car = await _context.carDetails.Where(x => x.Year == year)
-                    .Select(c => new GetCarDetailsOutputDTO
-                    {
-                        CarDetailsId = c.Id,
-                        Model = c.Model,
-                        Color = c.Color,
-                        FuelType = c.FuelType,
-                        Image = c.Image,
-                        Mileage = c.Mileage,
-                        SeatsCount = c.SeatsCount,
-                        Transmission = c.Transmission,
-                        Year = c.Year,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return car;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-
-        public async Task<List<GetCarDetailsOutputDTO>> GetCarsByFuelType(EFuelType fuelType)
-        {
-            try
-            {
-                var car = await _context.carDetails.Where(x => x.FuelType == fuelType)
-                    .Select(c => new GetCarDetailsOutputDTO
-                    {
-                        CarDetailsId = c.Id,
-                        Model = c.Model,
-                        Color = c.Color,
-                        FuelType = c.FuelType,
-                        Image = c.Image,
-                        Mileage = c.Mileage,
-                        SeatsCount = c.SeatsCount,
-                        Transmission = c.Transmission,
-                        Year = c.Year,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return car;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public async Task<List<GetCarByLocationDTO>> GetCarsByLocation(string location)
-        {
-            try
-            {
-                var getLocation = await _context.advertisements.Where(x => x.Location == location).SingleOrDefaultAsync();
-                if (getLocation == null)
-                {
-                    throw new Exception($"Could not find location {location}");
-                }
-                var car = await (from c in _context.carDetails
-                                 join adv in _context.advertisements on c.AdvertisementId equals adv.Id
-                                 where adv.Location == location
-                                 select new GetCarByLocationDTO
-                                 {
-                                     CarDetailsId = c.Id,
-                                     Model = c.Model,
-                                     Color = c.Color,
-                                     FuelType = c.FuelType,
-                                     Image = c.Image,
-                                     Mileage = c.Mileage,
-                                     SeatsCount = c.SeatsCount,
-                                     Transmission = c.Transmission,
-                                     Year = c.Year,
-                                     AdvertisementId = c.AdvertisementId,
-                                     Location = adv.Location,
-                                 }).ToListAsync();
-                return car;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            
-        }
-
-
-
-
-        public async Task<List<GetCarByPriceDTO>> GetCarsByPrice(decimal price)
-        {
-            try
-            {
-                var getLocation = await _context.advertisements.Where(x => x.Price == price).SingleOrDefaultAsync();
-                if (getLocation == null)
-                {
-                    throw new Exception($"Invalid Price {price}");
-                }
-                var car = await (from c in _context.carDetails
-                                 join adv in _context.advertisements on c.AdvertisementId equals adv.Id
-                                 where adv.Price == price
-                                 select new GetCarByPriceDTO
-                                 {
-                                     CarDetailsId = c.Id,
-                                     Model = c.Model,
-                                     Color = c.Color,
-                                     FuelType = c.FuelType,
-                                     Image = c.Image,
-                                     Mileage = c.Mileage,
-                                     SeatsCount = c.SeatsCount,
-                                     Transmission = c.Transmission,
-                                     Year = c.Year,
-                                     AdvertisementId = c.AdvertisementId,
-                                     Price = adv.Price,
-                                 }).ToListAsync();
-                return car;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public async Task<List<GetCarDetailsOutputDTO>> GetCarsBySeatsCount(int seatCount)
-        {
-            try
-            {
-                var car = await _context.carDetails.Where(x => x.SeatsCount == seatCount)
-                    .Select(c => new GetCarDetailsOutputDTO
-                    {
-                        CarDetailsId = c.Id,
-                        Model = c.Model,
-                        Color = c.Color,
-                        FuelType = c.FuelType,
-                        Image = c.Image,
-                        Mileage = c.Mileage,
-                        SeatsCount = c.SeatsCount,
-                        Transmission = c.Transmission,
-                        Year = c.Year,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return car;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public async Task<List<GetCarDetailsOutputDTO>> GetCarsByTransmission(ETransmission transmission)
-        {
-            try
-            {
-                var car = await _context.carDetails.Where(x => x.Transmission == transmission)
-                    .Select(c => new GetCarDetailsOutputDTO
-                    {
-                        CarDetailsId = c.Id,
-                        Model = c.Model,
-                        Color = c.Color,
-                        FuelType = c.FuelType,
-                        Image = c.Image,
-                        Mileage = c.Mileage,
-                        SeatsCount = c.SeatsCount,
-                        Transmission = c.Transmission,
-                        Year = c.Year,
-                        AdvertisementId = c.AdvertisementId
-                    }).ToListAsync();
-                return car;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
     }
 }

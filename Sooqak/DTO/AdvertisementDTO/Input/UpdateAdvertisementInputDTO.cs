@@ -12,6 +12,7 @@ namespace Sooqak.DTO.AdvertisementDTO.Input
         public string? Title { get; set; }
         public string? Description { get; set; }
         public decimal? Price { get; set; }
+        public IFormFile? Image { get; set; }
         public EAdvertisementType? AdvertisementType { get; set; }
         public string? Location { get; set; }
         public EAdvertisementStatus? Status { get; set; }

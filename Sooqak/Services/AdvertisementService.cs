@@ -7,7 +7,9 @@ using Sooqak.DTO.CarDetailsDTO.Output;
 using Sooqak.DTO.ElectricalDeviceDTO.Output;
 using Sooqak.DTO.WorksDTO.Output;
 using Sooqak.Entities;
+using Sooqak.Helper.Enums.AdvertisementEnum;
 using Sooqak.Helper.Enums.Category;
+using Sooqak.Helper.Image;
 using Sooqak.Interface;
 
 namespace Sooqak.Services
@@ -42,6 +44,7 @@ namespace Sooqak.Services
                     Status = input.Status,
                     AdvertisementType = input.AdvertisementType,
                     Location = input.Location,
+                    Image = await ImageHelper.SaveImageAsync(input.Image),
                     CategoryId = input.CategoryId,
                     CreationDate = DateTime.Now,
                     CreatedBy = "System",
@@ -49,7 +52,7 @@ namespace Sooqak.Services
                 };
 
                 await _context.advertisements.AddAsync(advertisement);
-                _context.SaveChanges(); 
+                await _context.SaveChangesAsync(); 
 
                
                 switch (category.CategoryType)
@@ -66,7 +69,6 @@ namespace Sooqak.Services
                             Year = input.CarDetails.Year,
                             Mileage = input.CarDetails.Mileage,
                             Transmission = input.CarDetails.Transmission,
-                            Image = input.CarDetails.Image,
                             FuelType = input.CarDetails.FuelType,
                             Color = input.CarDetails.Color,
                             CreationDate = DateTime.Now,
@@ -92,7 +94,7 @@ namespace Sooqak.Services
                             IsFurnished = input.ApartmentDetails.IsFurnished,
                             IsHaveParking = input.ApartmentDetails.IsHaveParking,
                             Description = input.ApartmentDetails.Description,
-                            Image = input.ApartmentDetails.Image,
+                            
                             CreationDate = DateTime.Now,
                             CreatedBy = "System"
                         };
@@ -174,6 +176,8 @@ namespace Sooqak.Services
 
                 if (input.Status.HasValue)
                     advertisement.Status = input.Status.Value;
+                
+                 
 
                 if (input.AdvertisementType.HasValue)
                     advertisement.AdvertisementType = input.AdvertisementType.Value;
@@ -212,8 +216,6 @@ namespace Sooqak.Services
                             if (!string.IsNullOrEmpty(input.CarDetails.Color))
                                 carDetails.Color = input.CarDetails.Color;
 
-                            if (!string.IsNullOrEmpty(input.CarDetails.Image))
-                                carDetails.Image = input.CarDetails.Image;
 
                             if (input.CarDetails.FuelType.HasValue)
                             {
@@ -260,8 +262,6 @@ namespace Sooqak.Services
                             if (!string.IsNullOrEmpty(input.ApartmentDetails.Description))
                                 apartmentDetails.Description = input.ApartmentDetails.Description;
 
-                            if (!string.IsNullOrEmpty(input.ApartmentDetails.Image))
-                                apartmentDetails.Image = input.ApartmentDetails.Image;
                         }
                         break;
 
@@ -384,6 +384,7 @@ namespace Sooqak.Services
                     Description = advertisement.Description,
                     Price = advertisement.Price,
                     Status = advertisement.Status,
+                    Image = advertisement.Image,
                     AdvertisementType = advertisement.AdvertisementType,
                     Location = advertisement.Location,
                     CategoryId = advertisement.CategoryId,
@@ -398,8 +399,7 @@ namespace Sooqak.Services
                         FuelType = advertisement.CarDetails.FuelType,
                         Color = advertisement.CarDetails.Color,
                         Mileage = advertisement.CarDetails.Mileage,
-                        Transmission = advertisement.CarDetails.Transmission,
-                        Image = advertisement.CarDetails.Image
+                        Transmission = advertisement.CarDetails.Transmission
                     } : null,
 
 
@@ -414,8 +414,7 @@ namespace Sooqak.Services
                         IsFurnished = advertisement.ApartmentDetails.IsFurnished,
                         IsHaveElevator = advertisement.ApartmentDetails.IsHaveElevator,
                         IsHaveParking = advertisement.ApartmentDetails.IsHaveParking,
-                        Description = advertisement.ApartmentDetails.Description,
-                        Image = advertisement.ApartmentDetails.Image
+                        Description = advertisement.ApartmentDetails.Description
                     } : null,
 
                     ElectricalDevice = advertisement.ElectricalAppliance != null ? new GetElectricalDeviceOutputDTO
@@ -466,6 +465,7 @@ namespace Sooqak.Services
                     Status = ad.Status,
                     AdvertisementType = ad.AdvertisementType,
                     Location = ad.Location,
+                    Image = ad.Image,
                     CategoryId = ad.CategoryId,
                     UserId = ad.UserId,
                     CreationDate = ad.CreationDate,
@@ -477,8 +477,7 @@ namespace Sooqak.Services
                         FuelType = ad.CarDetails.FuelType,
                         Color = ad.CarDetails.Color,
                         Mileage = ad.CarDetails.Mileage,
-                        Transmission = ad.CarDetails.Transmission,
-                        Image = ad.CarDetails.Image
+                        Transmission = ad.CarDetails.Transmission
                     } : null,
                     ApartmentDetails = ad.ApartmentDetails != null ? new GetApartmentOutputDTO
                     {
@@ -491,8 +490,7 @@ namespace Sooqak.Services
                         IsFurnished = ad.ApartmentDetails.IsFurnished,
                         IsHaveElevator = ad.ApartmentDetails.IsHaveElevator,
                         IsHaveParking = ad.ApartmentDetails.IsHaveParking,
-                        Description = ad.ApartmentDetails.Description,
-                        Image = ad.ApartmentDetails.Image
+                        Description = ad.ApartmentDetails.Description
                     } : null,
                     ElectricalDevice = ad.ElectricalAppliance != null ? new GetElectricalDeviceOutputDTO
                     {
@@ -519,6 +517,200 @@ namespace Sooqak.Services
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+
+        public async Task<List<AdvertisementOutputDTO>> FilterAdvertisements(int? categoryId = null,
+                        EAdvertisementType? advertisementType = null)
+        {
+            try
+            {
+                var query = _context.advertisements.AsQueryable();
+
+                if (categoryId.HasValue)
+                    query = query.Where(a => a.CategoryId == categoryId.Value);
+
+                if (advertisementType.HasValue)
+                    query = query.Where(a => a.AdvertisementType == advertisementType.Value);
+
+                var ads = await query
+                    .Select(a => new AdvertisementOutputDTO
+                    {
+                        AdvertisementId = a.Id,
+                        Title = a.Title,
+                        Description = a.Description,
+                        Price = a.Price,
+                        Status = a.Status,
+                        AdvertisementType = a.AdvertisementType,
+                        Location = a.Location,
+                        CategoryId = a.CategoryId,
+                        CreationDate = a.CreationDate,
+                        Image = a.Image,
+
+
+                        CarDetails = a.Category.CategoryType == ECategoryType.Cars ? _context.carDetails
+                                        .Where(c => c.AdvertisementId == a.Id)
+                                        .Select(c => new GetCarDetailsOutputDTO
+                                        {
+                                            CarDetailsId = c.Id,
+                                            AdvertisementId = c.AdvertisementId,
+                                            Model = c.Model,
+                                            Year = c.Year,
+                                            SeatsCount = c.SeatsCount,
+                                            FuelType = c.FuelType,
+                                            Transmission = c.Transmission,
+                                            Color = c.Color,
+                                            Mileage = c.Mileage
+                                        }).FirstOrDefault() : null,
+
+                        ApartmentDetails = a.Category.CategoryType == ECategoryType.Apartment ? _context.apartmentDetails
+                                        .Where(ap => ap.AdvertisementId == a.Id)
+                                        .Select(ap => new GetApartmentOutputDTO
+                                        {
+                                            ApartmentId = ap.Id,
+                                            AdvertisementId = ap.AdvertisementId,
+                                            TotalFloor = ap.TotalFloor,
+                                            Area = ap.Area,
+                                            RoomsCount = ap.RoomsCount,
+                                            BathroomsCount = ap.BathroomsCount,
+                                            FloorNumber = ap.FloorNumber,
+                                            IsHaveBalcony = ap.IsHaveBalcony,
+                                            IsHaveElevator = ap.IsHaveElevator,
+                                            IsFurnished = ap.IsFurnished,
+                                            IsHaveParking = ap.IsHaveParking,
+                                            Description = ap.Description
+                                        }).FirstOrDefault() : null,
+
+                        ElectricalDevice = a.Category.CategoryType == ECategoryType.ElectricalDevice ? _context.electricalAppliances
+                                        .Where(e => e.AdvertisementId == a.Id)
+                                        .Select(e => new GetElectricalDeviceOutputDTO
+                                        {
+                                            ElectricalDeviceId = e.Id,
+                                            AdvertisementId = e.AdvertisementId,
+                                            Brand = e.Brand,
+                                            Model = e.Model,
+                                            Condition = e.Condition,
+                                            IsWarranty = e.IsWarranty,
+                                            Feature = e.Feature
+                                        }).FirstOrDefault() : null,
+
+                        Works = a.Category.CategoryType == ECategoryType.Works ? _context.works
+                                        .Where(w => w.AdvertisementId == a.Id)
+                                        .Select(w => new GetWorksOutputDTO
+                                        {
+                                            WorksId = w.Id,
+                                            AdvertisementId = w.AdvertisementId,
+                                            Name = w.Name,
+                                            ServiceType = w.ServiceType,
+                                            PriceType = w.PriceType,
+                                            BasePrice = w.BasePrice.Value,
+                                            Experience = w.Experience,
+                                            Availability = w.Availability
+                                        }).FirstOrDefault() : null
+
+
+                    }).ToListAsync();
+
+                return ads;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+           
+        }
+
+
+
+        public async Task<List<AdvertisementOutputDTO>> GetAdvertisementsByCategory(int categoryId)
+        {
+            try
+            {
+                var category = await _context.categories.FindAsync(categoryId);
+                if (category == null)
+                    throw new Exception("Category not found");
+
+                var ads = await _context.advertisements
+                    .Where(a => a.CategoryId == categoryId)
+                    .Select(a => new AdvertisementOutputDTO
+                    {
+                        AdvertisementId = a.Id,
+                        Title = a.Title,
+                        Description = a.Description,
+                        Price = a.Price,
+                        AdvertisementType = a.AdvertisementType,
+                        Location = a.Location,
+                        Image = a.Image,
+                        Status = a.Status,
+                        UserId = a.UserId,
+                        CategoryId = a.CategoryId,
+                        CreationDate = a.CreationDate,
+                        CarDetails = category.CategoryType == ECategoryType.Cars
+                            ? _context.carDetails
+                                .Where(c => c.AdvertisementId == a.Id)
+                                .Select(c => new GetCarDetailsOutputDTO
+                                {
+                                    SeatsCount = c.SeatsCount,
+                                    Model = c.Model,
+                                    Year = c.Year,
+                                    Mileage = c.Mileage,
+                                    Transmission = c.Transmission,
+                                    FuelType = c.FuelType,
+                                    Color = c.Color
+                                }).FirstOrDefault()
+                            : null,
+                        ApartmentDetails = category.CategoryType == ECategoryType.Apartment
+                            ? _context.apartmentDetails
+                                .Where(ap => ap.AdvertisementId == a.Id)
+                                .Select(ap => new GetApartmentOutputDTO
+                                {
+                                    RoomsCount = ap.RoomsCount,
+                                    BathroomsCount = ap.BathroomsCount,
+                                    FloorNumber = ap.FloorNumber,
+                                    TotalFloor = ap.TotalFloor,
+                                    Area = ap.Area,
+                                    IsHaveBalcony = ap.IsHaveBalcony,
+                                    IsFurnished = ap.IsFurnished,
+                                    IsHaveElevator = ap.IsHaveElevator,
+                                    IsHaveParking = ap.IsHaveParking,
+                                    Description = ap.Description
+                                }).FirstOrDefault()
+                            : null,
+                        ElectricalDevice = category.CategoryType == ECategoryType.ElectricalDevice
+                            ? _context.electricalAppliances
+                                .Where(e => e.AdvertisementId == a.Id)
+                                .Select(e => new GetElectricalDeviceOutputDTO
+                                {
+                                    Brand = e.Brand,
+                                    Model = e.Model,
+                                    Condition = e.Condition,
+                                    Feature = e.Feature,
+                                    IsWarranty = e.IsWarranty
+                                }).FirstOrDefault()
+                            : null,
+                        Works = category.CategoryType == ECategoryType.Works
+                            ? _context.works
+                                .Where(w => w.AdvertisementId == a.Id)
+                                .Select(w => new GetWorksOutputDTO
+                                {
+                                    Name = w.Name,
+                                    ServiceType = w.ServiceType,
+                                    PriceType = w.PriceType,
+                                    BasePrice = w.BasePrice.Value,
+                                    Experience = w.Experience,
+                                    Availability = w.Availability
+                                }).FirstOrDefault()
+                            : null
+                    })
+                    .ToListAsync();
+
+                return ads;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            
         }
     }
 }

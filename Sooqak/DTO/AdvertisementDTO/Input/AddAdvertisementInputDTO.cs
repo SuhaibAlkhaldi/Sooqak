@@ -19,6 +19,7 @@ namespace Sooqak.DTO.AdvertisementDTO.Input
         public EAdvertisementType AdvertisementType { get; set; }
         public string Location { get; set; }
         public EAdvertisementStatus Status { get; set; }
+        public IFormFile Image { get; set; }
         public int UserId { get; set; }
         public int CategoryId { get; set; }
         public AddCarDetailsInputDTO? CarDetails { get; set; }

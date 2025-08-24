@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sooqak.Context;
 
@@ -11,9 +12,11 @@ using Sooqak.Context;
 namespace Sooqak.Migrations
 {
     [DbContext(typeof(SooqakDbContext))]
-    partial class SooqakDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250823224217_AddTableUserFavorite")]
+    partial class AddTableUserFavorite
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,10 +47,6 @@ namespace Sooqak.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Image")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -117,6 +116,10 @@ namespace Sooqak.Migrations
                     b.Property<int>("FloorNumber")
                         .HasColumnType("int");
 
+                    b.Property<string>("Image")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -176,6 +179,10 @@ namespace Sooqak.Migrations
 
                     b.Property<int>("FuelType")
                         .HasColumnType("int");
+
+                    b.Property<string>("Image")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");

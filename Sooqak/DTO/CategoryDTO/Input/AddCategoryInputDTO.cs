@@ -6,6 +6,6 @@ namespace Sooqak.DTO.CategoryDTO.Input
     {
         public ECategoryType CategoryType { get; set; }
         public string Description { get; set; }
-        public string Icon { get; set; }
+        public IFormFile Icon { get; set; }
     }
 }

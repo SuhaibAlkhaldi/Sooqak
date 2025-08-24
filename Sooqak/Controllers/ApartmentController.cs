@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Sooqak.DTO.ApartmentDetailsDTO.Input;
 using Sooqak.Interface;
 
 namespace Sooqak.Controllers
@@ -15,12 +16,12 @@ namespace Sooqak.Controllers
         }
 
 
-        [HttpGet("[action]")]
-        public async Task<IActionResult> GetApartmentByRoomsCount(int roomsCount)
+        [HttpPost("[action]")]
+        public async Task<IActionResult> GetApartmentsByFilter([FromBody] ApartmentFilterDTO filter)
         {
             try
             {
-                var result = await _apartment.GetApartmentByRoomsCount(roomsCount);
+                var result = await _apartment.GetApartmentsByFilter(filter);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -30,64 +31,6 @@ namespace Sooqak.Controllers
         }
 
 
-        [HttpGet("[action]")]
-        public async Task<IActionResult> GetApartmentByFloorNumber(int floorNumber)
-        {
-            try
-            {
-                var result = await _apartment.GetApartmentByFloorNumber(floorNumber);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-
-        [HttpGet("[action]")]
-        public async Task<IActionResult> GetApartmentByArea(double area)
-        {
-            try
-            {
-                var result = await _apartment.GetApartmentByArea(area);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-
-        [HttpGet("[action]")]
-        public async Task<IActionResult> GetApartmentByLocation(string location)
-        {
-            try
-            {
-                var result = await _apartment.GetApartmentByLocation(location);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-
-
-        [HttpGet("[action]")]
-        public async Task<IActionResult> GetApartmentByPrice(decimal price)
-        {
-            try
-            {
-                var result = await _apartment.GetApartmentByPrice(price);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
+        
     }
 }

@@ -10,7 +10,6 @@ namespace Sooqak.Entities
         public int SeatsCount { get; set; }
         public EFuelType FuelType { get; set; }
         public string Color { get; set; }
-        public string Image { get; set; }
         public string Mileage { get; set; }
         public ETransmission Transmission { get; set; }
         [ForeignKey("AdvertisementId")]

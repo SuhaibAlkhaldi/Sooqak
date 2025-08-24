@@ -14,7 +14,6 @@ namespace Sooqak.Entities
         public bool IsHaveElevator { get; set; }
         public bool IsHaveParking { get; set; }
         public string Description { get; set; }
-        public string Image { get; set; }
         [ForeignKey("AdvertisementId")]
         public int AdvertisementId { get; set; }
         public Advertisement Advertisement { get; set; }

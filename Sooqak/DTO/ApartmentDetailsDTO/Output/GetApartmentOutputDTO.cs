@@ -13,7 +13,9 @@
         public bool IsHaveElevator { get; set; }
         public bool IsHaveParking { get; set; }
         public string Description { get; set; }
-        public string Image { get; set; }
+        public string Location { get; set; }
+        public string Image {  get; set; }
+        public decimal Price { get; set; }
         public int AdvertisementId { get; set; }
     }
 }

@@ -18,6 +18,7 @@ namespace Sooqak.DTO.AdvertisementDTO.Output
         public decimal Price { get; set; }
         public EAdvertisementType AdvertisementType { get; set; }
         public string Location { get; set; }
+        public string Image { get; set; }
         public EAdvertisementStatus Status { get; set; }
         public int UserId { get; set; }
         public int CategoryId { get; set; }

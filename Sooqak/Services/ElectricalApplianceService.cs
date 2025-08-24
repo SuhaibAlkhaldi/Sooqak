@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sooqak.Context;
 using Sooqak.DTO.ApartmentDetailsDTO.Output;
+using Sooqak.DTO.ElectricalDeviceDTO.Input;
 using Sooqak.DTO.ElectricalDeviceDTO.Output;
 using Sooqak.Interface;
 
@@ -14,112 +15,44 @@ namespace Sooqak.Services
             _context = context;
         }
 
-        public async Task<List<GetElectricalDeviceOutputDTO>> GetElectricalApplianceByBrand(string brand)
+        public async Task<List<GetElectricalDeviceOutputDTO>> GetElectricalAppliancesByFilter(ElectricalApplianceFilterDTO filter)
         {
-            try
+            var query = _context.electricalAppliances.Include(e => e.Advertisement).AsQueryable();
+
+            if (!string.IsNullOrEmpty(filter.Brand))
+                query = query.Where(e => e.Brand.Contains(filter.Brand)).OrderBy(b => b.Brand);
+
+            if (!string.IsNullOrEmpty(filter.Model))
+                query = query.Where(e => e.Model.Contains(filter.Model)).OrderBy(m => m.Model);
+
+            if (filter.MinPrice.HasValue)
+                query = query.Where(e => e.Advertisement.Price >= filter.MinPrice.Value).OrderBy(p => p.Advertisement.Price);
+
+            if (filter.MaxPrice.HasValue)
+                query = query.Where(e => e.Advertisement.Price <= filter.MaxPrice.Value).OrderBy(p => p.Advertisement.Price);
+
+            if (!string.IsNullOrEmpty(filter.Location))
+                query = query.Where(e => e.Advertisement.Location.Contains(filter.Location));
+
+
+            query = query
+                        .Skip((filter.PageNumber - 1) * filter.PageSize)
+                        .Take(filter.PageSize);
+
+            return await query.Select(e => new GetElectricalDeviceOutputDTO
             {
-                var getElectricalAppliance = await _context.electricalAppliances.Where(x => x.Brand == brand)
-                    .Select(e => new GetElectricalDeviceOutputDTO 
-                        {
-                            ElectricalDeviceId = e.Id,
-                            Brand = e.Brand,
-                            Model = e.Model,
-                            Condition = e.Condition,
-                            Feature = e.Feature,
-                            IsWarranty = e.IsWarranty,
-                            AdvertisementId = e.AdvertisementId
-                        }).ToListAsync();
-                return getElectricalAppliance;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+                ElectricalDeviceId = e.Id,
+                Brand = e.Brand,
+                Model = e.Model,
+                Condition = e.Condition,
+                IsWarranty = e.IsWarranty,
+                Feature = e.Feature,
+                Price = e.Advertisement.Price,
+                Location = e.Advertisement.Location,
+                Image = e.Advertisement.Image
+            }).ToListAsync();
         }
 
         
-
-        public async Task<List<GetElectricalDeviceOutputDTO>> GetElectricalApplianceByModel(string model)
-        {
-            try
-            {
-                var getElectricalAppliance = await _context.electricalAppliances.Where(x => x.Model == model)
-                    .Select(e => new GetElectricalDeviceOutputDTO
-                    {
-                        ElectricalDeviceId = e.Id,
-                        Brand = e.Brand,
-                        Model = e.Model,
-                        Condition = e.Condition,
-                        Feature = e.Feature,
-                        IsWarranty = e.IsWarranty,
-                        AdvertisementId = e.AdvertisementId
-                    }).ToListAsync();
-                return getElectricalAppliance;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-
-
-        public async Task<List<GetElectricalApplianceByLocationDTO>> GetElectricalApplianceByLocation(string location)
-        {
-            try
-            {
-                var getLocation = await _context.advertisements.Where(x => x.Location == location).SingleOrDefaultAsync();
-                if (getLocation == null)
-                {
-                    throw new Exception($"Could not find location {location}");
-                }
-                var electricalDevice = await (from elec in _context.electricalAppliances
-                                       join adv in _context.advertisements on elec.AdvertisementId equals adv.Id
-                                       where adv.Location == location
-                                       select new GetElectricalApplianceByLocationDTO
-                                       {
-                                          ElectricalDeviceId = elec.Id,
-                                          Brand = elec.Brand,
-                                          Model = elec.Model,
-                                          Condition = elec.Condition,
-                                          Feature = elec.Feature,
-                                          IsWarranty = elec.IsWarranty,
-                                          AdvertisementId = elec.AdvertisementId,
-                                          Location = adv.Location,
-                                       }).ToListAsync();
-                return electricalDevice;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-
-        public async Task<List<GetElectricalApplianceByPriceDTO>> GetElectricalApplianceByPrice(decimal price)
-        {
-            try
-            {
-                var electricalDevice = await (from elec in _context.electricalAppliances
-                                       join adv in _context.advertisements on elec.AdvertisementId equals adv.Id
-                                       where adv.Price == price
-                                       select new GetElectricalApplianceByPriceDTO
-                                       {
-                                           ElectricalDeviceId = elec.Id,
-                                           Brand = elec.Brand,
-                                           Model = elec.Model,
-                                           Condition = elec.Condition,
-                                           Feature = elec.Feature,
-                                           IsWarranty = elec.IsWarranty,
-                                           AdvertisementId = elec.AdvertisementId,
-                                           Price = adv.Price
-                                       }).ToListAsync();
-                return electricalDevice;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sooqak.Context;
 using Sooqak.DTO.ApartmentDetailsDTO.Output;
+using Sooqak.DTO.WorksDTO.Input;
 using Sooqak.DTO.WorksDTO.Output;
 using Sooqak.Helper.Enums.Work;
 using Sooqak.Interface;
@@ -16,160 +17,50 @@ namespace Sooqak.Services
             _context = context;
         }
 
-        public async Task<List<GetWorksOutputDTO>> GetWorkByAvailability(bool isAvailable)
+        public async Task<List<GetWorksOutputDTO>> GetWorksByFilter(WorkFilterDTO filter)
         {
-            try
+            var query = _context.works.Include(w => w.Advertisement).AsQueryable();
+
+            if (filter.ServiceType.HasValue)
+                query = query.Where(w => w.ServiceType == filter.ServiceType.Value).OrderBy(s => s.ServiceType);
+
+            if (filter.PriceType.HasValue)
+                query = query.Where(w => w.PriceType == filter.PriceType.Value).OrderBy(p => p.PriceType);
+
+            if (filter.MinBasePrice.HasValue)
+                query = query.Where(w => w.BasePrice >= filter.MinBasePrice.Value).OrderBy(b => b.BasePrice);
+
+            if (filter.MaxBasePrice.HasValue)
+                query = query.Where(w => w.BasePrice <= filter.MaxBasePrice.Value).OrderBy(b => b.BasePrice);
+
+            if (!string.IsNullOrEmpty(filter.Experience))
+                query = query.Where(w => w.Experience.Contains(filter.Experience)).OrderBy(e => e.Experience);
+
+            if (filter.Availability.HasValue)
+                query = query.Where(w => w.Availability == filter.Availability.Value).OrderBy(a => a.Availability);
+
+            if (!string.IsNullOrEmpty(filter.Location))
+                query = query.Where(w => w.Advertisement.Location.Contains(filter.Location));
+
+
+            query = query
+                        .Skip((filter.PageNumber - 1) * filter.PageSize)
+                        .Take(filter.PageSize);
+
+            return await query.Select(w => new GetWorksOutputDTO
             {
-                var getAvailability = await _context.works.Where(x => x.Availability == isAvailable)
-                    .Select(a => new GetWorksOutputDTO
-                    {
-                        WorksId = a.Id,
-                        Name = a.Name,
-                        BasePrice = a.BasePrice.Value,
-                        Experience = a.Experience,
-                        PriceType = a.PriceType,
-                        ServiceType = a.ServiceType,
-                        Availability = a.Availability,
-                        AdvertisementId = a.AdvertisementId
-                    }).ToListAsync();
-                return getAvailability;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+                WorksId = w.Id,
+                Name = w.Name,
+                ServiceType = w.ServiceType,
+                PriceType = w.PriceType,
+                BasePrice = w.BasePrice.Value,
+                Experience = w.Experience,
+                Availability = w.Availability,
+                Price = w.Advertisement.Price,
+                Location = w.Advertisement.Location,
+                Image = w.Advertisement.Image
+            }).ToListAsync();
         }
 
-        public async Task<List<GetWorksOutputDTO>> GetWorkByBasePrice(decimal basePrice)
-        {
-            try
-            {
-                var getAvailability = await _context.works.Where(x => x.BasePrice == basePrice)
-                    .Select(a => new GetWorksOutputDTO
-                    {
-                        WorksId = a.Id,
-                        Name = a.Name,
-                        BasePrice = a.BasePrice.Value,
-                        Experience = a.Experience,
-                        PriceType = a.PriceType,
-                        ServiceType = a.ServiceType,
-                        Availability = a.Availability,
-                        AdvertisementId = a.AdvertisementId
-                    }).ToListAsync();
-                return getAvailability;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-        public async Task<List<GetWorksOutputDTO>> GetWorkByExperience(string experience)
-        {
-            try
-            {
-                var getAvailability = await _context.works.Where(x => x.Experience == experience)
-                    .Select(a => new GetWorksOutputDTO
-                    {
-                        WorksId = a.Id,
-                        Name = a.Name,
-                        BasePrice = a.BasePrice.Value,
-                        Experience = a.Experience,
-                        PriceType = a.PriceType,
-                        ServiceType = a.ServiceType,
-                        Availability = a.Availability,
-                        AdvertisementId = a.AdvertisementId
-                    }).ToListAsync();
-                return getAvailability;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        
-
-        public async Task<List<GetWorksOutputDTO>> GetWorkByPriceType(PriceType priceType)
-        {
-            try
-            {
-                var getAvailability = await _context.works.Where(x => x.PriceType == priceType)
-                    .Select(a => new GetWorksOutputDTO
-                    {
-                        WorksId = a.Id,
-                        Name = a.Name,
-                        BasePrice = a.BasePrice.Value,
-                        Experience = a.Experience,
-                        PriceType = a.PriceType,
-                        ServiceType = a.ServiceType,
-                        Availability = a.Availability,
-                        AdvertisementId = a.AdvertisementId
-                    }).ToListAsync();
-                return getAvailability;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public async Task<List<GetWorksOutputDTO>> GetWorkByService(ServiceType service)
-        {
-            try
-            {
-                var getAvailability = await _context.works.Where(x => x.ServiceType == service)
-                    .Select(a => new GetWorksOutputDTO
-                    {
-                        WorksId = a.Id,
-                        Name = a.Name,
-                        BasePrice = a.BasePrice.Value,
-                        Experience = a.Experience,
-                        PriceType = a.PriceType,
-                        ServiceType = a.ServiceType,
-                        Availability = a.Availability,
-                        AdvertisementId = a.AdvertisementId
-                    }).ToListAsync();
-                return getAvailability;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-
-
-
-        public async Task<List<GetWorkByLocationDTO>> GetWorkByLocation(string location)
-        {
-            try
-            {
-                var getLocation = await _context.advertisements.Where(x => x.Location == location).SingleOrDefaultAsync();
-                if (getLocation == null)
-                {
-                    throw new Exception($"Could not find location {location}");
-                }
-                var apartment = await (from work in _context.works
-                                       join adv in _context.advertisements on work.AdvertisementId equals adv.Id
-                                       where adv.Location == location
-                                       select new GetWorkByLocationDTO
-                                       {
-                                           WorksId = work.Id,
-                                           Name = work.Name,
-                                           BasePrice = work.BasePrice.Value,
-                                           Experience = work.Experience,
-                                           PriceType = work.PriceType,
-                                           ServiceType = work.ServiceType,
-                                           Availability = work.Availability,
-                                           AdvertisementId = work.AdvertisementId,
-                                           Location = adv.Location,
-                                       }).ToListAsync();
-                return apartment;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
     }
 }
